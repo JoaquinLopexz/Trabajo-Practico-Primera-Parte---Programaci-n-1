@@ -2,7 +2,7 @@ from functools import reduce
 import csv                      
 import json                       
 
-#    BLOQUE 1 - CARTELERA 
+#BLOQUE 1 - CARTELERA 
 # key: horario (str, ej: "14:00") | value: nombre de la pelicula (str)
 dictPeliculas    = {}
 
