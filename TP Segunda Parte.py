@@ -1,28 +1,8 @@
-# ==============================================
-#    SISTEMA INTEGRADO DE GESTION DE CINE
-#    VERSION FINAL - TRABAJO PRACTICO
-#    (con diccionarios)
-# ==============================================
+from functools import reduce   
+import csv                      
+import json                       
 
-from functools import reduce       # Programacion funcional
-import csv                         # Para leer/escribir archivos CSV
-import json                        # Para leer/escribir archivos JSON
-
-# ##############################################
-# #                                            #
-# #            DATOS GLOBALES                  #
-# #         (agrupados en 4 bloques)           #
-# #                                            #
-# ##############################################
-
-
-# ==============================================
-#    BLOQUE 1 - CARTELERA  ->  cartelera.csv
-#    Lo escribe el ADMINISTRADOR, lo lee el ESPECTADOR.
-#    Son listas paralelas (mismo indice = misma pelicula):
-#    horario | nombre | sala | precio | entradas | codigo
-# ==============================================
-
+#    BLOQUE 1 - CARTELERA 
 # key: horario (str, ej: "14:00") | value: nombre de la pelicula (str)
 dictPeliculas    = {}
 
@@ -33,12 +13,7 @@ entradasVendidas = []
 codigos          = []
 
 
-# ==============================================
-#    BLOQUE 2 - ASIENTOS  ->  asientos.csv
-#    Matriz 10 filas (A-J) x 10 columnas (1-10)
-#    0 = disponible | 1 = ocupado
-#    La actualiza el ESPECTADOR al comprar.
-# ==============================================
+#    BLOQUE 2 - ASIENTOS 
 FILAS_ASIENTOS    = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J"]
 COLUMNAS_ASIENTOS = 10
 
@@ -53,24 +28,10 @@ while i < len(FILAS_ASIENTOS):
     matrizAsientos.append(fila)
     i = i + 1
 
-
-# ==============================================
-#    BLOQUE 3 - COMPRAS  ->  compras.json
-#    Estructura anidada (por eso va en JSON).
-#    Lo escribe el ESPECTADOR, lo lee el ADMINISTRADOR.
-#    key: numero de compra (int, autoincremental: 1, 2, 3...)
-#    value: {"cartelera", "asiento", "combo", "descuento",
-#            "metodoPago", "total", "nombreComprador"}
-# ==============================================
+#    BLOQUE 3 - COMPRAS 
 dictCompras = {}
 
-
-# ==============================================
-#    BLOQUE 4 - CATALOGOS / CONFIGURACION  ->  catalogos.json
-#    Datos fijos de referencia. Los lee el ESPECTADOR al comprar.
-#    Combos, descuentos, metodos de pago y precio de entrada.
-# ==============================================
-
+#    BLOQUE 4 - CATALOGOS / CONFIGURACION
 # key: nombre del combo | value: precio
 dictCombos = {
     "Sin combo"                    : 0,
@@ -112,10 +73,7 @@ listaMetodosPago = ["Billeteras virtuales", "Efectivo", "Visa", "Mastercard", "C
 PRECIO_ENTRADA   = 10000
 
 
-# ==============================================
 #    FUNCIONES AUXILIARES
-# ==============================================
-
 def solicitar_numero(mensaje, minimo, maximo):
     """
     Solicita un numero validado entre minimo y maximo
@@ -239,10 +197,7 @@ def solicitar_asiento_validado():
     return asiento
 
 
-# ==============================================
 #    MATRIZ DE ASIENTOS - FUNCIONES
-# ==============================================
-
 def asiento_a_indices(asiento):
     """
     Convierte 'A5' en (fila=0, col=4) para indexar la matriz
@@ -301,10 +256,7 @@ def mostrarMapaAsientos():
     print("==========================================")
 
 
-# ==============================================
 #    PROGRAMACION FUNCIONAL: map / filter / reduce
-# ==============================================
-
 def obtenerRecaudacionPorPelicula():
     """
     map + lambda: recaudacion de cada pelicula (entradas x precio)
@@ -424,10 +376,7 @@ def reporteFuncional():
     print("\n==========================================")
 
 
-# ==============================================
 #    CONJUNTOS - DIFERENCIA DE ASIENTOS
-# ==============================================
-
 def asientosDisponibles():
     """
     Usa diferencia de conjuntos para obtener los asientos libres:
@@ -467,10 +416,7 @@ def mostrarAsientosDisponibles():
     print("==========================================")
 
 
-# ==============================================
 #    MENUS PRINCIPALES
-# ==============================================
-
 def menuPrincipal():
     imprimir_separador("       SISTEMA INTEGRADO DE CINE")
     print("1. MODO ADMINISTRADOR\n2. MODO ESPECTADOR\n0. Salir")
@@ -499,10 +445,8 @@ def menuEspectador():
     return solicitar_numero("Seleccione una opcion: ", 0, 4)
 
 
-# ==============================================
-#    PERSISTENCIA - CARTELERA (cartelera.csv)
+#    CARTELERA
 #    Lo escribe el ADMINISTRADOR, lo lee el ESPECTADOR.
-# ==============================================
 
 def guardarCarteleraCSV():
     """
@@ -562,12 +506,9 @@ def cargarCarteleraCSV():
         print(" (No hay cartelera guardada todavia - primera ejecucion)")
 
 
-# ==============================================
-#    PERSISTENCIA - ASIENTOS (asientos.csv)
+#    ASIENTOS
 #    Matriz 10x10 (0 = libre, 1 = ocupado).
 #    La actualiza el ESPECTADOR al comprar.
-# ==============================================
-
 def guardarAsientosCSV():
     """
     Guarda la matriz de asientos en asientos.csv (una fila por linea).
@@ -600,12 +541,9 @@ def cargarAsientosCSV():
         pass    # primera vez: la matriz queda en 0 (todo libre)
 
 
-# ==============================================
-#    PERSISTENCIA - COMPRAS (compras.json)
-#    Estructura anidada -> se guarda con JSON.
+#    COMPRAS
+#    Estructura anidada se guarda con JSON.
 #    Lo escribe el ESPECTADOR, lo lee el ADMINISTRADOR.
-# ==============================================
-
 def guardarComprasJSON():
     """
     Guarda el diccionario de compras en compras.json.
@@ -629,11 +567,8 @@ def cargarComprasJSON():
     except FileNotFoundError:
         pass    # primera vez: no hay compras todavia
 
-
-# ==============================================
-#    PERSISTENCIA - CATALOGOS (catalogos.json)
+#    CATALOGOS
 #    Datos fijos: combos, descuentos y metodos de pago.
-# ==============================================
 
 def guardarCatalogosJSON():
     """
@@ -667,10 +602,7 @@ def cargarCatalogosJSON():
         guardarCatalogosJSON()    # primera vez: creo el archivo con los valores fijos
 
 
-# ==============================================
 #    FUNCIONES ADMINISTRATIVAS
-# ==============================================
-
 def generar_codigo_pelicula():
     """
     Genera un codigo unico automatico: PELI001, PELI002, etc.
@@ -830,10 +762,7 @@ def estadisticasVentas():
     print("==========================================")
 
 
-# ==============================================
 #    FUNCIONES DEL ESPECTADOR
-# ==============================================
-
 def mostrarCarteleraEspectador():
     imprimir_separador("        CARTELERA DISPONIBLE")
     if len(dictPeliculas) == 0:
@@ -964,8 +893,8 @@ def confirmarCompra(funcionElegida, asiento, comboElegido, descuentoElegido, met
         }
         marcar_asiento_ocupado(asiento)
 
-        guardarComprasJSON()     # registro la compra en compras.json
-        guardarAsientosCSV()     # actualizo el asiento ocupado en asientos.csv
+        guardarComprasJSON()     # registro la compra en compras
+        guardarAsientosCSV()     # actualizo el asiento ocupado en asientos
 
         imprimir_separador(" COMPRA REALIZADA CON EXITO!")
         print("   Ticket registrado | Asiento " + asiento + " reservado")
@@ -1042,10 +971,7 @@ def verHistorialOrdenado():
     print("==========================================")
 
 
-# ==============================================
 #    BUSQUEDA Y ANALISIS
-# ==============================================
-
 def buscarPorNombre(nombre_buscar):
     imprimir_separador("       BUSQUEDA POR NOMBRE")
     if len(dictCompras) == 0:
@@ -1159,10 +1085,7 @@ def menuAnalisis():
         analisisPeliculas()
 
 
-# ==============================================
 #    FUNCION PRINCIPAL
-# ==============================================
-
 def main():
     print("==========================================")
     print("   BIENVENIDOS A CINE DIGITAL")
