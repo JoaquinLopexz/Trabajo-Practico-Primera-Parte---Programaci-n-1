@@ -1,0 +1,209 @@
+#    FUNCIONES DEL ESPECTADOR
+def mostrarCarteleraEspectador():
+    imprimir_separador("        CARTELERA DISPONIBLE")
+    if len(dictPeliculas) == 0:
+        print("No hay peliculas disponibles. El administrador debe cargarlas primero.")
+    else:
+        horarios_lista = list(dictPeliculas.keys())
+        nombres_lista  = list(dictPeliculas.values())
+        i = 0
+        while i < len(horarios_lista):
+            print(str(i + 1) + ". " + nombres_lista[i] +
+                  " | Sala " + str(salas[i]) +
+                  " | Horario: " + horarios_lista[i] +
+                  " | Precio: $" + str(precios[i]))
+            i = i + 1
+        print(" Total de funciones: " + str(len(dictPeliculas)))
+    print("==========================================")
+
+def elegirFuncion():
+    """
+    Muestra cartelera al espectador y retorna la funcion elegida
+    """
+    imprimir_separador("        CARTELERA DISPONIBLE")
+    if len(dictPeliculas) == 0:
+        print("No hay peliculas disponibles.\n==========================================")
+        return "", 0, "", ""
+    horarios_lista = list(dictPeliculas.keys())
+    nombres_lista  = list(dictPeliculas.values())
+    i = 0
+    while i < len(horarios_lista):
+        print(str(i + 1) + ". " + nombres_lista[i] +
+              " | Sala " + str(salas[i]) +
+              " | Horario: " + horarios_lista[i] +
+              " | Precio: $" + str(precios[i]))
+        i = i + 1
+    print("==========================================")
+    indice         = solicitar_numero("Seleccione el numero de pelicula: ", 1, len(dictPeliculas)) - 1
+    funcionElegida = nombres_lista[indice] + " | Sala " + str(salas[indice]) + " | " + horarios_lista[indice]
+    print(" Funcion seleccionada: " + funcionElegida)
+    return funcionElegida, salas[indice], nombres_lista[indice], horarios_lista[indice]
+
+def seleccionarAsiento(numeroSala, nombrePelicula, horario):
+    imprimir_separador("       SELECCION DE ASIENTO")
+    print(" Sala " + str(numeroSala) + " - Asientos: A1 a J10\n")
+    mostrarMapaAsientos()
+    print()
+    asiento = solicitar_asiento_validado()
+    while esta_asiento_ocupado(asiento):
+        print(" El asiento " + asiento + " ya esta ocupado.")
+        asiento = solicitar_asiento_validado()
+    print("\n Asiento " + asiento + " seleccionado")
+    return asiento
+
+def elegirCombo():
+    imprimir_separador("       SELECCION DE COMBO")
+    nombresCombo = list(dictCombos.keys())
+    preciosCombo = list(dictCombos.values())
+    i = 0
+    while i < len(nombresCombo):
+        print(str(i + 1) + ". " + nombresCombo[i] + " - $" + str(preciosCombo[i]))
+        i = i + 1
+    print("==========================================")
+    indice             = solicitar_opcion_lista("Seleccione el numero de combo: ", nombresCombo)
+    nombreSeleccionado = nombresCombo[indice]
+    print(" Combo seleccionado: " + nombreSeleccionado)
+    return nombreSeleccionado, dictCombos[nombreSeleccionado]
+
+def aplicarDescuento():
+    imprimir_separador("       APLICAR DESCUENTO")
+    tiposDescuento = list(dictDescuentos.keys())
+    i = 0
+    while i < len(tiposDescuento):
+        tipo = tiposDescuento[i]
+        print(str(i + 1) + ". " + tipo + " (" + str(int(dictDescuentos[tipo] * 100)) + "%)")
+        i = i + 1
+    print("==========================================")
+    indice           = solicitar_opcion_lista("Seleccione el descuento: ", tiposDescuento)
+    tipoSeleccionado = tiposDescuento[indice]
+    print(" Descuento aplicado: " + tipoSeleccionado)
+    return tipoSeleccionado, dictDescuentos[tipoSeleccionado]
+
+def seleccionarMetodoPago():
+    imprimir_separador("       METODO DE PAGO")
+    i = 0
+    while i < len(listaMetodosPago):
+        print(str(i + 1) + ". " + listaMetodosPago[i])
+        i = i + 1
+    print("==========================================")
+    indice = solicitar_opcion_lista("Seleccione el metodo de pago: ", listaMetodosPago)
+    return listaMetodosPago[indice]
+
+def calcularTotal(precioCombo, porcentajeDescuento, metodoPago):
+    subtotal  = PRECIO_ENTRADA + precioCombo
+    descuento = subtotal * porcentajeDescuento
+    recargo   = subtotal * 0.10 if metodoPago == "Credito" else 0
+    total     = subtotal - descuento + recargo
+    return subtotal, descuento, recargo, total
+
+def confirmarCompra(funcionElegida, asiento, comboElegido, descuentoElegido, metodoPago,
+                    subtotal, descuento, recargo, total, nombreComprador,
+                    nombrePelicula, numeroSala, horario):
+    imprimir_separador(" RESUMEN DE TU COMPRA")
+    print("  Pelicula: "       + funcionElegida)
+    print("  Asiento: "        + asiento)
+    print("  Combo: "          + comboElegido)
+    print("  Descuento: "      + descuentoElegido)
+    print("  Metodo de pago: " + metodoPago)
+    print("\n  Subtotal: $"    + str(subtotal))
+    print("  Descuento: -$"   + str(round(descuento, 2)))
+    if recargo > 0:
+        print("  Recargo credito: +$" + str(round(recargo, 2)))
+    print("  TOTAL: $"        + str(round(total, 2)))
+    print("==========================================")
+
+    confirmacion = input("Confirmar compra? (S/N): ").upper()
+    while confirmacion != "S" and confirmacion != "N":
+        confirmacion = input("Ingrese S o N: ").upper()
+
+    if confirmacion == "S":
+        numeroCompra = len(dictCompras) + 1
+        dictCompras[numeroCompra] = {
+            "cartelera"       : funcionElegida,
+            "asiento"         : asiento,
+            "combo"           : comboElegido,
+            "descuento"       : descuentoElegido,
+            "metodoPago"      : metodoPago,
+            "total"           : round(total, 2),
+            "nombreComprador" : nombreComprador
+        }
+        marcar_asiento_ocupado(asiento)
+
+        guardarComprasJSON()     # registro la compra en compras
+        guardarAsientosCSV()     # actualizo el asiento ocupado en asientos
+
+        imprimir_separador(" COMPRA REALIZADA CON EXITO!")
+        print("   Ticket registrado | Asiento " + asiento + " reservado")
+        print("   Disfruta tu pelicula, " + nombreComprador + "!")
+        print("==========================================")
+        return 1
+    else:
+        imprimir_separador(" COMPRA CANCELADA")
+        print("   No se realizo ningun cargo\n==========================================")
+        return 0
+
+def procesarCompra():
+    if len(dictPeliculas) == 0:
+        print("No hay peliculas disponibles.")
+        return 0
+    try:
+        nombreComprador = solicitar_nombre_validado("Ingrese su nombre completo: ")
+        funcionElegida, numeroSala, nombrePelicula, horario = elegirFuncion()
+        if funcionElegida == "":
+            return 0
+        asiento                             = seleccionarAsiento(numeroSala, nombrePelicula, horario)
+        comboElegido, precioCombo           = elegirCombo()
+        descuentoElegido, pctDescuento      = aplicarDescuento()
+        metodoPago                          = seleccionarMetodoPago()
+        subtotal, descuento, recargo, total = calcularTotal(precioCombo, pctDescuento, metodoPago)
+        return confirmarCompra(funcionElegida, asiento, comboElegido, descuentoElegido, metodoPago,
+                               subtotal, descuento, recargo, total, nombreComprador,
+                               nombrePelicula, numeroSala, horario)
+    except Exception as e:
+        print("ERROR inesperado durante la compra: " + str(e))
+        return 0
+
+def verHistorialCompras():
+    imprimir_separador("       HISTORIAL DE COMPRAS")
+    if len(dictCompras) == 0:
+        print(" No hay compras registradas.")
+    else:
+        numeros = list(dictCompras.keys())
+        i = 0
+        while i < len(numeros):
+            k     = numeros[i]
+            datos = dictCompras[k]
+            print("--- Compra #" + str(k) + " ---")
+            print("  Comprador: " + datos["nombreComprador"] + " | Funcion: " + datos["cartelera"])
+            print("  Asiento: "   + datos["asiento"] + " | Combo: " + datos["combo"])
+            print("  Descuento: " + datos["descuento"] +
+                  " | Pago: "     + datos["metodoPago"] +
+                  " | Total: $"   + str(datos["total"]) + "\n")
+            i = i + 1
+        print(" Total de compras: " + str(len(dictCompras)))
+    print("==========================================")
+
+def verHistorialOrdenado():
+    """
+    Ordena el historial por nombre usando sorted() con lambda
+    """
+    imprimir_separador("   HISTORIAL ORDENADO POR COMPRADOR")
+    if len(dictCompras) == 0:
+        print(" No hay compras registradas.\n==========================================")
+        return
+    numerosOrdenados = sorted(dictCompras.keys(), key=lambda k: dictCompras[k]["nombreComprador"].upper())
+    i = 0
+    while i < len(numerosOrdenados):
+        k     = numerosOrdenados[i]
+        datos = dictCompras[k]
+        print("--- Compra #" + str(i + 1) + " ---")
+        print("  Comprador: " + datos["nombreComprador"] + " | Funcion: " + datos["cartelera"])
+        print("  Asiento: "   + datos["asiento"] + " | Combo: " + datos["combo"])
+        print("  Descuento: " + datos["descuento"] +
+              " | Pago: "     + datos["metodoPago"] +
+              " | Total: $"   + str(datos["total"]) + "\n")
+        i = i + 1
+    print(" Total de compras: " + str(len(dictCompras)))
+    print("==========================================")
+
+
