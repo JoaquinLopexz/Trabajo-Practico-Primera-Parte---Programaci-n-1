@@ -1,1 +1,347 @@
+#    MENUS PRINCIPALES
+def menuPrincipal():
+    imprimir_separador("       SISTEMA INTEGRADO DE CINE")
+    print("1. MODO ADMINISTRADOR\n2. MODO ESPECTADOR\n0. Salir")
+    print("==========================================")
+    return solicitar_numero("Seleccione una opcion: ", 0, 2)
+
+def menuAdministrador():
+    imprimir_separador("        MODO ADMINISTRADOR")
+    opciones = [
+        "Cargar salas y peliculas", "Mostrar cartelera", "Vender entradas",
+        "Ver recaudacion por sala y total", "Modificar pelicula", "Calcular totales generales",
+        "Estadisticas de ventas", "Busqueda de registros", "Analisis y estadisticas",
+        "Reporte funcional (map/filter/reduce)", "Asientos disponibles (conjuntos)"
+    ]
+    i = 0
+    while i < len(opciones):
+        print(str(i + 1) + ". " + opciones[i])
+        i = i + 1
+    print("0. Volver al menu principal\n==========================================")
+    return solicitar_numero("Seleccione una opcion: ", 0, 11)
+
+def menuEspectador():
+    imprimir_separador("         MODO ESPECTADOR")
+    print("1. Ver Cartelera\n2. Comprar Entrada\n3. Ver Historial de Compras\n4. Ver Historial Ordenado")
+    print("0. Volver al menu principal\n==========================================")
+    return solicitar_numero("Seleccione una opcion: ", 0, 4)
+
+
+#    CARTELERA
+#    Lo escribe el ADMINISTRADOR, lo lee el ESPECTADOR.
+
+def guardarCarteleraCSV():
+    """
+    Guarda toda la cartelera en cartelera.csv (modo "w" -> pisa todo).
+    Cada fila: horario, nombre, sala, precio, entradas, codigo
+    """
+    archivo  = open("cartelera.csv", "w", newline="", encoding="utf-8")
+    escritor = csv.writer(archivo)
+    escritor.writerow(["horario", "nombre", "sala", "precio", "entradas", "codigo"])
+
+    horarios = list(dictPeliculas.keys())
+    i = 0
+    while i < len(horarios):
+        horario = horarios[i]
+        nombre  = dictPeliculas[horario]
+        escritor.writerow([horario, nombre, salas[i], precios[i], entradasVendidas[i], codigos[i]])
+        i = i + 1
+
+    archivo.close()
+
+def cargarCarteleraCSV():
+    """
+    Lee cartelera.csv y carga los datos en memoria.
+    Si el archivo todavia no existe (primera ejecucion), no hace nada.
+    """
+    try:
+        archivo = open("cartelera.csv", "r", newline="", encoding="utf-8")
+        lector  = csv.reader(archivo)
+
+        # vacio las estructuras para no duplicar al cargar
+        dictPeliculas.clear()
+        salas.clear()
+        precios.clear()
+        entradasVendidas.clear()
+        codigos.clear()
+
+        primera = True
+        for fila in lector:
+            if primera == True:
+                primera = False            # salteo la linea de encabezado
+            elif len(fila) == 6:
+                horario  = fila[0]
+                nombre   = fila[1]
+                sala     = int(fila[2])
+                precio   = int(fila[3])
+                entradas = int(fila[4])
+                codigo   = fila[5]
+
+                dictPeliculas[horario] = nombre
+                salas.append(sala)
+                precios.append(precio)
+                entradasVendidas.append(entradas)
+                codigos.append(codigo)
+
+        archivo.close()
+    except FileNotFoundError:
+        print(" (No hay cartelera guardada todavia - primera ejecucion)")
+
+
+#    ASIENTOS
+#    Matriz 10x10 (0 = libre, 1 = ocupado).
+#    La actualiza el ESPECTADOR al comprar.
+def guardarAsientosCSV():
+    """
+    Guarda la matriz de asientos en asientos.csv (una fila por linea).
+    """
+    archivo  = open("asientos.csv", "w", newline="", encoding="utf-8")
+    escritor = csv.writer(archivo)
+    i = 0
+    while i < len(matrizAsientos):
+        escritor.writerow(matrizAsientos[i])
+        i = i + 1
+    archivo.close()
+
+def cargarAsientosCSV():
+    """
+    Lee asientos.csv y actualiza la matriz en memoria.
+    Si todavia no existe, deja la matriz vacia (todo libre).
+    """
+    try:
+        archivo = open("asientos.csv", "r", newline="", encoding="utf-8")
+        lector  = csv.reader(archivo)
+        i = 0
+        for fila in lector:
+            j = 0
+            while j < len(fila):
+                matrizAsientos[i][j] = int(fila[j])
+                j = j + 1
+            i = i + 1
+        archivo.close()
+    except FileNotFoundError:
+        pass    # primera vez: la matriz queda en 0 (todo libre)
+
+
+#    COMPRAS
+#    Estructura anidada se guarda con JSON.
+#    Lo escribe el ESPECTADOR, lo lee el ADMINISTRADOR.
+def guardarComprasJSON():
+    """
+    Guarda el diccionario de compras en compras.json.
+    """
+    archivo = open("compras.json", "w", encoding="utf-8")
+    json.dump(dictCompras, archivo, indent=4, ensure_ascii=False)
+    archivo.close()
+
+def cargarComprasJSON():
+    """
+    Lee compras.json y carga las compras en memoria.
+    Las claves vuelven como texto desde JSON, asi que las paso a int.
+    """
+    try:
+        archivo = open("compras.json", "r", encoding="utf-8")
+        datos   = json.load(archivo)
+        archivo.close()
+        dictCompras.clear()
+        for clave in datos:
+            dictCompras[int(clave)] = datos[clave]
+    except FileNotFoundError:
+        pass    # primera vez: no hay compras todavia
+
+#    CATALOGOS
+#    Datos fijos: combos, descuentos y metodos de pago.
+
+def guardarCatalogosJSON():
+    """
+    Guarda los catalogos (combos, descuentos, metodos) en catalogos.json.
+    """
+    catalogos = {
+        "combos"      : dictCombos,
+        "descuentos"  : dictDescuentos,
+        "metodosPago" : listaMetodosPago
+    }
+    archivo = open("catalogos.json", "w", encoding="utf-8")
+    json.dump(catalogos, archivo, indent=4, ensure_ascii=False)
+    archivo.close()
+
+def cargarCatalogosJSON():
+    """
+    Lee catalogos.json. Si no existe, lo crea con los valores por defecto.
+    """
+    try:
+        archivo   = open("catalogos.json", "r", encoding="utf-8")
+        catalogos = json.load(archivo)
+        archivo.close()
+
+        dictCombos.clear()
+        dictCombos.update(catalogos["combos"])
+        dictDescuentos.clear()
+        dictDescuentos.update(catalogos["descuentos"])
+        listaMetodosPago.clear()
+        listaMetodosPago.extend(catalogos["metodosPago"])
+    except FileNotFoundError:
+        guardarCatalogosJSON()    # primera vez: creo el archivo con los valores fijos
+
+
+#    FUNCIONES ADMINISTRATIVAS
+def generar_codigo_pelicula():
+    """
+    Genera un codigo unico automatico: PELI001, PELI002, etc.
+    """
+    numero = len(codigos) + 1
+    codigo = "PELI" + str(numero).zfill(3)
+    while codigo in codigos:
+        numero = numero + 1
+        codigo = "PELI" + str(numero).zfill(3)
+    return codigo
+
+def cargarPeliculas():
+    continuar = "S"
+    while continuar == "S":
+        imprimir_separador("      CARGANDO NUEVA PELICULA")
+        codigo = generar_codigo_pelicula()
+        print(" Codigo asignado automaticamente: " + codigo + "\n")
+
+        nombre  = solicitar_nombre_validado("Ingrese el nombre de la pelicula: ")
+        sala    = solicitar_numero("Ingrese el numero de sala (1-100): ", 1, 100)
+        print(" Precio de entrada (entre $5,000 y $50,000):")
+        precio  = solicitar_numero("Ingrese el precio: ", 5000, 50000)
+        horario = solicitar_horario_validado("Ingrese el horario (ej: 14:00): ")
+
+        dictPeliculas[horario] = nombre
+        salas.append(sala)
+        precios.append(precio)
+        entradasVendidas.append(0)
+        codigos.append(codigo)
+
+        imprimir_separador("PELICULA CARGADA CORRECTAMENTE")
+        print("   Codigo: " + codigo + " | Pelicula: " + nombre)
+        print("   Sala: " + str(sala) + " | Horario: " + horario)
+        print("   Precio entrada: $" + str(precio))
+        print("==========================================")
+
+        continuar = input("Desea agregar otra pelicula? (S/N): ").upper()
+        while continuar != "S" and continuar != "N":
+            print("ERROR: Opcion invalida. Ingrese S o N.")
+            continuar = input("Desea agregar otra pelicula? (S/N): ").upper()
+
+    guardarCarteleraCSV()    # persisto la cartelera en disco
+    print(" Cartelera guardada en cartelera.csv")
+
+def mostrarCarteleraAdmin():
+    imprimir_separador("          CARTELERA - CINE DIGITAL")
+    if len(dictPeliculas) == 0:
+        print("No hay peliculas cargadas.")
+    else:
+        print(" PELICULAS CARGADAS:\n")
+        horarios_lista = list(dictPeliculas.keys())
+        nombres_lista  = list(dictPeliculas.values())
+        i = 0
+        while i < len(horarios_lista):
+            print(str(i + 1) + ". " + nombres_lista[i])
+            print("   Codigo: " + codigos[i] + " | Sala: " + str(salas[i]) + " | Horario: " + horarios_lista[i])
+            print("   PRECIO: $" + str(precios[i]) + " | Vendidas: " + str(entradasVendidas[i]) + "\n")
+            i = i + 1
+        print(" Total de peliculas: " + str(len(dictPeliculas)))
+    print("==========================================")
+
+def venderEntradasAdmin():
+    if len(dictPeliculas) == 0:
+        print("No hay peliculas cargadas.")
+        return
+    mostrarCarteleraAdmin()
+    nombres_lista = list(dictPeliculas.values())
+    indice   = solicitar_numero("Seleccione el numero de pelicula: ", 1, len(dictPeliculas)) - 1
+    cantidad = solicitar_numero("Ingrese la cantidad de entradas a vender: ", 1, 1000)
+    entradasVendidas[indice] = entradasVendidas[indice] + cantidad
+    print("Se vendieron " + str(cantidad) + " entradas para " + nombres_lista[indice])
+    guardarCarteleraCSV()    # actualizo el CSV con las nuevas ventas
+
+def verRecaudacion():
+    imprimir_separador("   RECAUDACION POR SALA Y TOTAL")
+    if len(dictPeliculas) == 0:
+        print("No hay peliculas cargadas.\n==========================================")
+        return
+
+    dictRecaudacionPorSala = {}
+    i = 0
+    while i < len(salas):
+        sala        = salas[i]
+        recaudacion = entradasVendidas[i] * precios[i]
+        if sala in dictRecaudacionPorSala:
+            dictRecaudacionPorSala[sala] = dictRecaudacionPorSala[sala] + recaudacion
+        else:
+            dictRecaudacionPorSala[sala] = recaudacion
+        i = i + 1
+
+    salasOrdenadas = sorted(dictRecaudacionPorSala.keys())
+    j = 0
+    while j < len(salasOrdenadas):
+        sala = salasOrdenadas[j]
+        print(" Sala " + str(sala) + ": $" + str(dictRecaudacionPorSala[sala]))
+        j = j + 1
+
+    listaRecaudaciones = list(dictRecaudacionPorSala.values())
+    totalGeneral = reduce(lambda acum, x: acum + x, listaRecaudaciones)
+    print("==========================================")
+    print(" TOTAL GENERAL: $" + str(totalGeneral))
+    print("==========================================")
+
+def modificarPelicula():
+    if len(dictPeliculas) == 0:
+        print("No hay peliculas cargadas.")
+        return
+    mostrarCarteleraAdmin()
+    horarios_lista = list(dictPeliculas.keys())
+    indice = solicitar_numero("Seleccione el numero de pelicula a modificar: ", 1, len(dictPeliculas)) - 1
+    print("\nQue desea modificar?\n1. Nombre\n2. Sala\n3. Precio\n4. Horario")
+    opcion = solicitar_numero("Seleccione opcion: ", 1, 4)
+    if opcion == 1:
+        nuevoNombre    = solicitar_nombre_validado("Nuevo nombre: ")
+        horario_actual = horarios_lista[indice]
+        dictPeliculas[horario_actual] = nuevoNombre
+    elif opcion == 2:
+        salas[indice]   = solicitar_numero("Nueva sala: ", 1, 100)
+    elif opcion == 3:
+        precios[indice] = solicitar_numero("Nuevo precio: ", 0, 1000000)
+    elif opcion == 4:
+        nuevoHorario   = solicitar_horario_validado("Nuevo horario: ")
+        horario_actual = horarios_lista[indice]
+        nombre_actual  = dictPeliculas[horario_actual]
+        del dictPeliculas[horario_actual]
+        dictPeliculas[nuevoHorario] = nombre_actual
+    print("Pelicula modificada exitosamente.")
+    guardarCarteleraCSV()    # actualizo el CSV con la modificacion
+
+def calcularTotales():
+    imprimir_separador("   TOTALES GENERALES DEL SISTEMA")
+    if len(dictPeliculas) == 0:
+        print("No hay datos para calcular.\n==========================================")
+        return
+    total_entradas    = sum(entradasVendidas)
+    total_recaudacion = calcularRecaudacionTotalReduce()
+    print(" Total de peliculas: " + str(len(dictPeliculas)))
+    print(" Total de entradas vendidas: " + str(total_entradas))
+    print(" Recaudacion total (reduce): $" + str(total_recaudacion))
+    print(" Promedio por pelicula: $" + str(round(total_recaudacion / len(dictPeliculas), 2)))
+    print("==========================================")
+
+def estadisticasVentas():
+    imprimir_separador("   ESTADISTICAS DE VENTAS")
+    if len(dictPeliculas) == 0:
+        print("No hay datos para analizar.\n==========================================")
+        return
+    nombres_lista = list(dictPeliculas.values())
+    max_ventas = max(entradasVendidas)
+    min_ventas = min(entradasVendidas)
+    promedio   = sum(entradasVendidas) / len(entradasVendidas)
+    idx_max    = entradasVendidas.index(max_ventas)
+    idx_min    = entradasVendidas.index(min_ventas)
+    print(" Pelicula mas vendida:   " + nombres_lista[idx_max] + " (" + str(max_ventas) + " entradas)")
+    print(" Pelicula menos vendida: " + nombres_lista[idx_min] + " (" + str(min_ventas) + " entradas)")
+    print(" Promedio de ventas: " + str(round(promedio, 2)) + " entradas")
+    print("==========================================")
+
+
 
