@@ -1,0 +1,6 @@
+﻿cartelera.csv
+asientos.csv
+compras.json
+catalogos.json
+__pycache__/
+*.pyc
